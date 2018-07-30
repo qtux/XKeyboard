@@ -21,6 +21,7 @@
 import time
 import Xlib
 from Xlib import XK, display
+import threading
 
 class NotSupportedError(Exception):
     """Generic NotSupportedError."""
@@ -33,7 +34,7 @@ class XKeyboard():
         Xlib.XK.load_keysym_group("xkb")
         self.ctrl_disp = display.Display()
 
-    def record(self, handler, escape_key="Escape"):
+    def record(self, handler, escape_key="Escape", stop_flag=threading.Event()):
         '''
         Start keylogging (blocks until the "escape" key has been hit.
         
@@ -80,7 +81,7 @@ class XKeyboard():
                     keysym = self.keycode_to_keysym(keycode)
 
                     # terminate on pressing the "escape" key
-                    if keysym == escape_key:
+                    if keysym == escape_key or stop_flag.is_set():
                         self.ctrl_disp.record_disable_context(context)
                         self.ctrl_disp.flush()
                         return
