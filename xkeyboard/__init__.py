@@ -65,6 +65,11 @@ class XKeyboard():
         # define callback to be called on X11 events
         parser = Xlib.protocol.rq.EventField(None)
         def callback(reply):
+            # exit on stop flag being set
+            if stop_flag.is_set():
+                self.ctrl_disp.record_disable_context(context)
+                self.ctrl_disp.flush()
+                return
             current_time = time.time()
             # ignore reply under certain conditions
             if reply.category != Xlib.ext.record.FromServer or reply.client_swapped:
@@ -81,7 +86,7 @@ class XKeyboard():
                     keysym = self.keycode_to_keysym(keycode)
 
                     # terminate on pressing the "escape" key
-                    if keysym == escape_key or stop_flag.is_set():
+                    if keysym == escape_key:
                         self.ctrl_disp.record_disable_context(context)
                         self.ctrl_disp.flush()
                         return
