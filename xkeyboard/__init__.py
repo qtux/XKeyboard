@@ -65,11 +65,6 @@ class XKeyboard():
         # define callback to be called on X11 events
         parser = Xlib.protocol.rq.EventField(None)
         def callback(reply):
-            # exit on stop flag being set
-            if stop_flag.is_set():
-                self.ctrl_disp.record_disable_context(context)
-                self.ctrl_disp.flush()
-                return
             current_time = time.time()
             # ignore reply under certain conditions
             if reply.category != Xlib.ext.record.FromServer or reply.client_swapped:
@@ -87,13 +82,19 @@ class XKeyboard():
 
                     # terminate on pressing the "escape" key
                     if keysym == escape_key:
-                        self.ctrl_disp.record_disable_context(context)
-                        self.ctrl_disp.flush()
+                        stop_flag.set()
                         return
                     # execute provided handler
                     if handler:
                         handler(current_time, keycode, keysym, event_type)
 
+        # disable the recording context on stop_flag being set
+        def stop_callback():
+            stop_flag.wait()
+            self.ctrl_disp.record_disable_context(context)
+            self.ctrl_disp.flush()
+
+        threading.Thread(target=stop_callback).start()
         try:
             # start recording (blocking)
             record_disp.record_enable_context(context, callback)
