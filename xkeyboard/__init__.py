@@ -94,7 +94,7 @@ class XKeyboard():
             self.ctrl_disp.record_disable_context(context)
             self.ctrl_disp.flush()
 
-        threading.Thread(target=stop_callback).start()
+        threading.Thread(target=stop_callback, daemon=True).start()
         try:
             # start recording (blocking)
             record_disp.record_enable_context(context, callback)
